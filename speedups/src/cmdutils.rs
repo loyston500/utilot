@@ -22,10 +22,10 @@ pub enum Token {
 
 #[derive(Debug)]
 pub enum TokenizerError {
-    StringScanEOF,
-    EscapeSeqEOF,
-    PatScanEOF,
-    PatZeroLength,
+    StringScanEOF(usize),
+    EscapeSeqEOF(usize),
+    PatScanEOF(usize),
+    PatZeroLength(usize),
 }
 
 pub fn tokenize(chars: Vec<char>) -> Result<Vec<Token>, TokenizerError> {
@@ -34,11 +34,13 @@ pub fn tokenize(chars: Vec<char>) -> Result<Vec<Token>, TokenizerError> {
     let mut temp: Vec<char> = Vec::new();
 
     while i < chars.len() {
+        let j = i.clone();
         match chars[i] {
+        
             '\\' => {
                 i += 1;
                 if !(i < chars.len()) {
-                    return Err(TokenizerError::EscapeSeqEOF);
+                    return Err(TokenizerError::EscapeSeqEOF(j));
                 }
                 
                 if chars[i] == 'n' {
@@ -76,7 +78,7 @@ pub fn tokenize(chars: Vec<char>) -> Result<Vec<Token>, TokenizerError> {
                 let c = chars[i].clone();
                 i += 1;
                 if !(i < chars.len()) {
-                    return Err(TokenizerError::StringScanEOF);
+                    return Err(TokenizerError::StringScanEOF(j));
                 }
 
                 if chars[i] == c {
@@ -90,7 +92,7 @@ pub fn tokenize(chars: Vec<char>) -> Result<Vec<Token>, TokenizerError> {
                         i += 1;
 
                         if !(i < chars.len()) {
-                            return Err(TokenizerError::StringScanEOF);
+                            return Err(TokenizerError::StringScanEOF(j));
                         }
                     }
                 }
@@ -114,7 +116,7 @@ pub fn tokenize(chars: Vec<char>) -> Result<Vec<Token>, TokenizerError> {
                 loop {
                     i += 1;
                     if !(i < chars.len()) {
-                        return Err(TokenizerError::PatScanEOF);
+                        return Err(TokenizerError::PatScanEOF(j));
                     }
                     match chars[i] {
                         'a'..='z' | 'A'..='Z' | '0'..='9' | '`' => {
@@ -127,7 +129,7 @@ pub fn tokenize(chars: Vec<char>) -> Result<Vec<Token>, TokenizerError> {
                 }
 
                 if pat.len() == 0 {
-                    return Err(TokenizerError::PatZeroLength);
+                    return Err(TokenizerError::PatZeroLength(j));
                 }
 
                 pat = if pat.starts_with("```") {
@@ -140,7 +142,7 @@ pub fn tokenize(chars: Vec<char>) -> Result<Vec<Token>, TokenizerError> {
                 while !cont.ends_with(&pat) {
                     match chars.get(i) {
                         Some(some) => cont.push(some.clone()),
-                        None => return Err(TokenizerError::PatScanEOF),
+                        None => return Err(TokenizerError::PatScanEOF(j)),
                     }
 
                     i += 1;

@@ -22,10 +22,10 @@ fn py_cmdtokenize(py: Python, source: String) -> PyResult<Vec<PyObject>> {
         Ok(ok) => ok,
         Err(err) => {
             return match err {
-                cmdutils::TokenizerError::StringScanEOF => Err(PyStringScanEOFError::new_err("")),
-                cmdutils::TokenizerError::EscapeSeqEOF => Err(PyEscapeSeqEOFError::new_err("")),
-                cmdutils::TokenizerError::PatScanEOF => Err(PyPatScanEOFError::new_err("")),
-                cmdutils::TokenizerError::PatZeroLength => Err(PyPatZeroLengthError::new_err("")),
+                cmdutils::TokenizerError::StringScanEOF(j) => Err(PyStringScanEOFError::new_err(j)),
+                cmdutils::TokenizerError::EscapeSeqEOF(j) => Err(PyEscapeSeqEOFError::new_err(j)),
+                cmdutils::TokenizerError::PatScanEOF(j) => Err(PyPatScanEOFError::new_err(j)),
+                cmdutils::TokenizerError::PatZeroLength(j) => Err(PyPatZeroLengthError::new_err(j)),
             };
         }
     };

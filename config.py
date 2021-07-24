@@ -11,7 +11,7 @@ prefix = "2b$"
 cmds = ['cmds.utils', 'cmds.doc_cmds', 'cmds.tio', 'cmds.fundamentals', 'cmds.rand', 'cmds.server_cmds', 'cmds.db', 'cmds.pil', 'cmds.owner']
 
 # Setting this to False will essentially disable print
-debug = False
+debug = True
 
 # Please, this needs to be True, for now at least!
 speedups = True

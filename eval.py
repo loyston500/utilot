@@ -4,30 +4,39 @@ import discord
 from cmd import cmd, Snd
 from io import BytesIO
 from aliases import command_aliases as aliases
-
+from miscutils import pointer
 import cmdutils
 
 import config
+PL = len(config.prefix)
+PAD = " "
 
 if config.speedups:
     try:
         import speedups
 
         tokenize = speedups.cmdutils.tokenize
+        
+        _cmdutils = speedups.cmdutils
+        EscapeSeqEOFError = _cmdutils.EscapeSeqEOFError
+        PatScanEOFError = _cmdutils.PatScanEOFError
+        PatZeroLengthError = _cmdutils.PatZeroLengthError
+        StringScanEOFError = _cmdutils.StringScanEOFError
+        
     except ImportError:
         raise ImportError("cmdparser not found")
     else:
         print("optimizations are applied!")
 else:
-    print("optimizations are disabled!")
-    from cmdutils import tokenize
-
+    #print("optimizations are disabled!")
+    #from cmdutils import tokenize
+    raise Exception("Optimizations cannot be disabled anymore!")
 
 class Eval:
     """Command Evaluator"""
 
     async def basic_evaluator(self, ctx):
-        content = ctx.message.content
+        content = msg = ctx.message.content
 
         try:
             tokens = tokenize(content)
@@ -35,21 +44,52 @@ class Eval:
             instrs, counts = cmdutils.parse(tree)
             print(tree)
         except IndexError:
-            return await ctx.send("syntax error.")
+            return await ctx.send("That's not a valid syntax/logic bruh.")
         except AssertionError:
-            return await ctx.send("syntax error.")
-        except Exception as err:
-            return await ctx.send("syntax error.")
-            print(str(err), err)
+            return await ctx.send("Didn't understand what you mean by that..")
+
+            
+        except PatScanEOFError as err:
+            n, = err.args           
+            return await ctx.send(
+            pointer(msg=msg, pad=PAD, position=n, pl=PL, extra="\n") + 
+                "End of message while scanning for the delimiter pair. "
+                "Please check if your \* syntax is correct."
+            )
+
+        except EscapeSeqEOFError as err:
+            n, = err.args
+            return await ctx.send(
+                pointer(msg=msg, pad=PAD, position=n, pl=PL, extra="\n") + 
+                "That \\ at the end of your message is redundant. "
+                "Remove it because I really despise it!"
+                
+            )
+
+        except PatZeroLengthError as err:
+            n, = err.args
+            return await ctx.send(
+                pointer(msg=msg, pad=PAD, position=n, pl=PL, extra="\n") + 
+                "That's not how \\* syntax work! "
+                "Perhaps remove the space after \\*."
+            )
+
+        except StringScanEOFError as err:
+            n, = err.args
+            return await ctx.send(
+                pointer(msg=msg, pad=PAD, position=n, pl=PL, extra="\n") + 
+                "You forgot to wrap your strings properly."
+            )
+                    
 
         (colncount, pipecount, filecount) = counts
 
         if pipecount > 7:
-            return await ctx.send("pipe limit exceeded.")
+            return await ctx.send("Pipe limit exceeded.")
         if colncount > 3:
-            return await ctx.send("statement limit exceeded.")
+            return await ctx.send("Statement limit exceeded.")
         if filecount > 3:
-            return await ctx.send("file limit exceeded.")
+            return await ctx.send("File limit exceeded.")
 
         piped = None
         outs = []
