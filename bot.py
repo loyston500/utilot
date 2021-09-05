@@ -40,7 +40,11 @@ async def on_message(message):
         message.content = message.content[3:]
     
         ctx = await bot.get_context(message)
-        await evaluator.basic_evaluator(ctx)
+
+        try:
+            await evaluator.basic_evaluator(ctx)
+        except Exception as err:
+            await message.channel.send(f"Error: {err}")
         
 
 bot.run(token)
